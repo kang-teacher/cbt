@@ -4,10 +4,12 @@ import sys
 import tempfile
 
 from flask import Flask, jsonify, render_template, request
+from flask_cors import CORS
 
 from problems import PROBLEMS
 
 app = Flask(__name__)
+CORS(app)
 
 BLOCKED_PATTERNS = [
     "import os",

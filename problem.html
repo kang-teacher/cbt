@@ -10,6 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+  <script src="config.js"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -47,12 +48,6 @@
 
     <!-- 에디터 영역 -->
     <div class="prob-editor-wrap">
-      <!-- Pyodide 로딩 오버레이 -->
-      <div id="pyodide-loading" class="pyodide-overlay">
-        <div class="pyodide-spinner"></div>
-        <p>Python 환경을 불러오는 중... (최초 1회, 약 10~20초)</p>
-      </div>
-
       <div class="editor-toolbar">
         <span class="editor-label">🐍 Python 3</span>
         <button class="btn btn-ghost btn-sm" onclick="resetCode()">초기화</button>
@@ -62,15 +57,15 @@
       <div class="run-bar">
         <div class="run-input-wrap">
           <label class="run-label">테스트 입력 (선택 — 직접 실행 시)</label>
-          <input type="text" id="custom-input" class="run-input" placeholder="입력값 (줄바꿈은 \n 으로, 예: 3\n5)">
+          <input type="text" id="custom-input" class="run-input" placeholder="입력값 (줄바꿈은 \n, 예: 3\n5)">
         </div>
-        <button class="btn btn-secondary" id="btn-run" onclick="runCode()" disabled>▶ 실행</button>
-        <button class="btn btn-success" id="btn-submit" onclick="submitCode()" disabled>제출</button>
+        <button class="btn btn-secondary" onclick="runCode()">▶ 실행</button>
+        <button class="btn btn-success" onclick="submitCode()">제출</button>
       </div>
 
       <div class="output-panel">
         <div class="output-header">출력</div>
-        <pre class="output-body" id="output-body">Python 환경 로딩 중...</pre>
+        <pre class="output-body" id="output-body">코드를 작성하고 실행해보세요.</pre>
       </div>
 
       <div class="result-panel" id="result-panel" style="display:none">
@@ -81,9 +76,6 @@
   </div>
 
   <script src="problems.js"></script>
-  <!-- Pyodide -->
-  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut }
@@ -102,7 +94,6 @@
     const auth = getAuth(fbApp);
     const db = getFirestore(fbApp);
 
-    // 로그아웃
     document.getElementById("btn-logout").addEventListener("click", async () => {
       await signOut(auth);
       location.href = "index.html";
@@ -134,7 +125,6 @@
       next.style.display = "";
     }
 
-    // 예제
     document.getElementById("prob-examples").innerHTML = prob.examples.map(ex => `
       <div class="example-block">
         ${ex.input ? `<div class="ex-row"><span class="ex-label">입력</span><pre class="ex-code">${escHtml(ex.input)}</pre></div>` : ""}
@@ -142,7 +132,6 @@
       </div>
     `).join("");
 
-    // 힌트
     if (prob.hint) {
       document.getElementById("hint-box").style.display = "";
       document.getElementById("prob-hint").textContent = prob.hint;
@@ -150,13 +139,12 @@
 
     // CodeMirror
     const storageKey = `code_${prob.id}`;
-    const savedCode = localStorage.getItem(storageKey) || prob.starterCode;
     const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
       mode: "python", theme: "dracula", lineNumbers: true,
       autoCloseBrackets: true, indentUnit: 4, tabSize: 4,
       extraKeys: { Tab: cm => cm.replaceSelection("    ") }
     });
-    editor.setValue(savedCode);
+    editor.setValue(localStorage.getItem(storageKey) || prob.starterCode);
     editor.on("change", () => localStorage.setItem(storageKey, editor.getValue()));
 
     window.resetCode = () => {
@@ -166,86 +154,59 @@
       }
     };
 
-    // ===== Pyodide 초기화 =====
-    let pyodide = null;
-    (async () => {
-      try {
-        pyodide = await loadPyodide();
-        document.getElementById("pyodide-loading").style.display = "none";
-        document.getElementById("btn-run").disabled = false;
-        document.getElementById("btn-submit").disabled = false;
-        document.getElementById("output-body").textContent = "준비 완료! 코드를 작성하고 실행해보세요.";
-      } catch (e) {
-        document.getElementById("pyodide-loading").innerHTML = `<p style="color:#fca5a5">Python 환경 로드 실패: ${e.message}</p>`;
-      }
-    })();
-
-    async function runPython(code, stdinText = "") {
-      const lines = stdinText === "" ? [] : stdinText.split("\\n");
-      // stdin 목(mock) 설정
-      const setupCode = `
-import sys, io, builtins
-sys.stdout = io.StringIO()
-sys.stderr = io.StringIO()
-_input_lines = iter(${JSON.stringify(lines)})
-builtins.input = lambda _='': next(_input_lines, '')
-`;
-      pyodide.runPython(setupCode);
-      let output = "", error = "", success = true;
-      try {
-        await pyodide.runPythonAsync(code);
-        output = pyodide.runPython("sys.stdout.getvalue()");
-        error = pyodide.runPython("sys.stderr.getvalue()");
-      } catch (e) {
-        error = pyodide.runPython("sys.stderr.getvalue()") || e.message;
-        success = false;
-      }
-      return { output, error, success };
-    }
-
+    // ===== Render API 호출 =====
     window.runCode = async () => {
-      if (!pyodide) return;
       const code = editor.getValue();
-      const rawInput = document.getElementById("custom-input").value;
+      const rawInput = document.getElementById("custom-input").value.replace(/\\n/g, "\n");
       setOutput("실행 중...", "running");
       document.getElementById("result-panel").style.display = "none";
-      const { output, error } = await runPython(code, rawInput);
-      const combined = (output || "") + (error ? "\n⚠ " + error : "");
-      setOutput(combined || "(출력 없음)", error && !output ? "error" : "ok");
+      try {
+        const res = await fetch(`${BACKEND_URL}/run`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, input: rawInput })
+        });
+        const data = await res.json();
+        const combined = (data.output || "") + (data.error ? "\n⚠ " + data.error : "");
+        setOutput(combined || "(출력 없음)", data.error && !data.output ? "error" : "ok");
+      } catch (e) {
+        setOutput("서버 연결 실패: " + e.message, "error");
+      }
     };
 
     window.submitCode = async () => {
-      if (!pyodide) return;
       const code = editor.getValue();
       setOutput("채점 중...", "running");
       document.getElementById("result-panel").style.display = "none";
-
-      const results = [];
-      let allPassed = true;
-
-      for (let i = 0; i < prob.testCases.length; i++) {
-        const tc = prob.testCases[i];
-        const { output, error, success } = await runPython(code, tc.input || "");
-        const actual = output.replace(/\r\n/g, "\n").trimEnd();
-        const expected = tc.output.replace(/\r\n/g, "\n").trimEnd();
-        const passed = actual === expected && success;
-        if (!passed) allPassed = false;
-        results.push({ test: i + 1, passed, input: tc.input || "(없음)", expected, actual, error });
+      try {
+        const res = await fetch(`${BACKEND_URL}/submit/${prob.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        showResults(data);
+        setOutput("", "");
+        if (data.passed) saveProgress();
+      } catch (e) {
+        setOutput("서버 연결 실패: " + e.message, "error");
       }
-
-      showResults(allPassed, results);
-      setOutput("", "");
-      if (allPassed) saveProgress();
     };
 
-    function showResults(allPassed, results) {
+    function showResults(data) {
       const panel = document.getElementById("result-panel");
       panel.style.display = "";
-      const passed = results.filter(r => r.passed).length;
-      document.getElementById("result-header").innerHTML = allPassed
-        ? `<span class="result-pass">🎉 모든 테스트 통과! (${passed}/${results.length})</span>`
-        : `<span class="result-fail">❌ 일부 실패 (${passed}/${results.length} 통과)</span>`;
-      document.getElementById("result-list").innerHTML = results.map(r => `
+      if (data.error && !data.results?.length) {
+        document.getElementById("result-header").innerHTML = `<span class="result-fail">❌ 오류</span>`;
+        document.getElementById("result-list").innerHTML = `<div class="result-item fail"><pre>${escHtml(data.error)}</pre></div>`;
+        return;
+      }
+      const passed = data.results.filter(r => r.passed).length;
+      const total = data.results.length;
+      document.getElementById("result-header").innerHTML = data.passed
+        ? `<span class="result-pass">🎉 모든 테스트 통과! (${passed}/${total})</span>`
+        : `<span class="result-fail">❌ 일부 실패 (${passed}/${total} 통과)</span>`;
+      document.getElementById("result-list").innerHTML = data.results.map(r => `
         <div class="result-item ${r.passed ? 'pass' : 'fail'}">
           <div class="result-item-header">${r.passed ? '✅' : '❌'} 테스트 ${r.test}</div>
           ${!r.passed ? `
@@ -264,7 +225,6 @@ builtins.input = lambda _='': next(_input_lines, '')
       if (!user) { location.href = "index.html"; return; }
       currentUser = user;
       document.getElementById("nav-user").textContent = user.displayName || user.email;
-      // 이미 풀었는지 확인
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists() && snap.data().solved?.[prob.id]) {
@@ -287,13 +247,9 @@ builtins.input = lambda _='': next(_input_lines, '')
             await updateDoc(ref, { solved });
           }
         } else {
-          await setDoc(ref, {
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            solved: { [prob.id]: now }
-          });
+          await setDoc(ref, { email: currentUser.email, displayName: currentUser.displayName, solved: { [prob.id]: now } });
         }
-      } catch(e) { console.error("저장 실패:", e); }
+      } catch(e) {}
     }
 
     function setOutput(text, type) {
