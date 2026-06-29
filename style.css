@@ -218,6 +218,7 @@ pre { font-family: 'Consolas', 'D2Coding', monospace; }
   font-size: 13px; width: 100%; font-family: monospace;
 }
 .run-input:focus { outline: none; border-color: var(--accent); }
+.run-textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
 
 .output-panel { background: var(--bg2); border-top: 1px solid var(--border); max-height: 160px; overflow-y: auto; flex-shrink: 0; }
 .output-header { padding: 6px 16px; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; border-bottom: 1px solid var(--border); }

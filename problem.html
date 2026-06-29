@@ -56,8 +56,8 @@
 
       <div class="run-bar">
         <div class="run-input-wrap">
-          <label class="run-label">테스트 입력 (선택 — 직접 실행 시)</label>
-          <input type="text" id="custom-input" class="run-input" placeholder="입력값 (줄바꿈은 \n, 예: 3\n5)">
+          <label class="run-label">테스트 입력 (Enter로 줄 구분)</label>
+          <textarea id="custom-input" class="run-input run-textarea" rows="3" placeholder="예: 3&#10;5"></textarea>
         </div>
         <button class="btn btn-secondary" onclick="runCode()">▶ 실행</button>
         <button class="btn btn-success" onclick="submitCode()">제출</button>
@@ -157,7 +157,7 @@
     // ===== Render API 호출 =====
     window.runCode = async () => {
       const code = editor.getValue();
-      const rawInput = document.getElementById("custom-input").value.replace(/\\n/g, "\n");
+      const rawInput = document.getElementById("custom-input").value;
       setOutput("실행 중...", "running");
       document.getElementById("result-panel").style.display = "none";
       try {
