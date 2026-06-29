@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문제풀이 - 파이썬 문제풀이</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <a class="brand" href="index.html">🐍 파이썬 문제풀이</a>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-user"></span>
+      <button class="btn btn-ghost" id="btn-logout">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="problem-page">
+    <!-- 사이드바 -->
+    <div class="prob-sidebar">
+      <div class="prob-nav">
+        <a href="dashboard.html" class="btn btn-ghost btn-sm">← 목록</a>
+        <a id="btn-prev" href="#" class="btn btn-ghost btn-sm" style="display:none">이전</a>
+        <a id="btn-next" href="#" class="btn btn-ghost btn-sm" style="display:none">다음 →</a>
+      </div>
+      <div class="prob-meta">
+        <span class="badge" id="prob-difficulty"></span>
+        <span class="prob-category" id="prob-category"></span>
+        <span class="badge-solved" id="solved-badge" style="display:none">✅ 해결됨</span>
+      </div>
+      <h1 class="prob-title" id="prob-title"></h1>
+      <div class="prob-desc" id="prob-desc"></div>
+      <div class="prob-section">
+        <h3>예제</h3>
+        <div id="prob-examples"></div>
+      </div>
+      <details class="hint-box" id="hint-box" style="display:none">
+        <summary>💡 힌트 보기</summary>
+        <p id="prob-hint"></p>
+      </details>
+    </div>
+
+    <!-- 에디터 영역 -->
+    <div class="prob-editor-wrap">
+      <!-- Pyodide 로딩 오버레이 -->
+      <div id="pyodide-loading" class="pyodide-overlay">
+        <div class="pyodide-spinner"></div>
+        <p>Python 환경을 불러오는 중... (최초 1회, 약 10~20초)</p>
+      </div>
+
+      <div class="editor-toolbar">
+        <span class="editor-label">🐍 Python 3</span>
+        <button class="btn btn-ghost btn-sm" onclick="resetCode()">초기화</button>
+      </div>
+      <textarea id="code-editor"></textarea>
+
+      <div class="run-bar">
+        <div class="run-input-wrap">
+          <label class="run-label">테스트 입력 (선택 — 직접 실행 시)</label>
+          <input type="text" id="custom-input" class="run-input" placeholder="입력값 (줄바꿈은 \n 으로, 예: 3\n5)">
+        </div>
+        <button class="btn btn-secondary" id="btn-run" onclick="runCode()" disabled>▶ 실행</button>
+        <button class="btn btn-success" id="btn-submit" onclick="submitCode()" disabled>제출</button>
+      </div>
+
+      <div class="output-panel">
+        <div class="output-header">출력</div>
+        <pre class="output-body" id="output-body">Python 환경 로딩 중...</pre>
+      </div>
+
+      <div class="result-panel" id="result-panel" style="display:none">
+        <div class="result-header" id="result-header"></div>
+        <div class="result-list" id="result-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="problems.js"></script>
+  <!-- Pyodide -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const fbApp = initializeApp({
+      apiKey: "AIzaSyAgFbYZPf9f7MXIcO6RaA3Zfv9sJgP-uSE",
+      authDomain: "cbtdb-ee6b6.firebaseapp.com",
+      projectId: "cbtdb-ee6b6",
+      storageBucket: "cbtdb-ee6b6.firebasestorage.app",
+      messagingSenderId: "264536322200",
+      appId: "1:264536322200:web:a3d06f21dd0b747abce0ed"
+    });
+    const auth = getAuth(fbApp);
+    const db = getFirestore(fbApp);
+
+    // 로그아웃
+    document.getElementById("btn-logout").addEventListener("click", async () => {
+      await signOut(auth);
+      location.href = "index.html";
+    });
+
+    // URL에서 문제 ID 파싱
+    const params = new URLSearchParams(location.search);
+    const probId = parseInt(params.get("id")) || 1;
+    const prob = PROBLEMS.find(p => p.id === probId);
+    if (!prob) { location.href = "dashboard.html"; }
+
+    // 문제 정보 렌더링
+    document.title = `#${prob.id} ${prob.title} - 파이썬 문제풀이`;
+    document.getElementById("prob-title").textContent = `#${prob.id}. ${prob.title}`;
+    document.getElementById("prob-desc").innerHTML = prob.description;
+    document.getElementById("prob-category").textContent = prob.category;
+    const diffEl = document.getElementById("prob-difficulty");
+    diffEl.textContent = prob.difficulty;
+    diffEl.className = `badge badge-${prob.difficulty}`;
+
+    if (prob.id > 1) {
+      const prev = document.getElementById("btn-prev");
+      prev.href = `problem.html?id=${prob.id - 1}`;
+      prev.style.display = "";
+    }
+    if (prob.id < 20) {
+      const next = document.getElementById("btn-next");
+      next.href = `problem.html?id=${prob.id + 1}`;
+      next.style.display = "";
+    }
+
+    // 예제
+    document.getElementById("prob-examples").innerHTML = prob.examples.map(ex => `
+      <div class="example-block">
+        ${ex.input ? `<div class="ex-row"><span class="ex-label">입력</span><pre class="ex-code">${escHtml(ex.input)}</pre></div>` : ""}
+        <div class="ex-row"><span class="ex-label">출력</span><pre class="ex-code">${escHtml(ex.output)}</pre></div>
+      </div>
+    `).join("");
+
+    // 힌트
+    if (prob.hint) {
+      document.getElementById("hint-box").style.display = "";
+      document.getElementById("prob-hint").textContent = prob.hint;
+    }
+
+    // CodeMirror
+    const storageKey = `code_${prob.id}`;
+    const savedCode = localStorage.getItem(storageKey) || prob.starterCode;
+    const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+      mode: "python", theme: "dracula", lineNumbers: true,
+      autoCloseBrackets: true, indentUnit: 4, tabSize: 4,
+      extraKeys: { Tab: cm => cm.replaceSelection("    ") }
+    });
+    editor.setValue(savedCode);
+    editor.on("change", () => localStorage.setItem(storageKey, editor.getValue()));
+
+    window.resetCode = () => {
+      if (confirm("코드를 초기화할까요?")) {
+        editor.setValue(prob.starterCode);
+        localStorage.removeItem(storageKey);
+      }
+    };
+
+    // ===== Pyodide 초기화 =====
+    let pyodide = null;
+    (async () => {
+      try {
+        pyodide = await loadPyodide();
+        document.getElementById("pyodide-loading").style.display = "none";
+        document.getElementById("btn-run").disabled = false;
+        document.getElementById("btn-submit").disabled = false;
+        document.getElementById("output-body").textContent = "준비 완료! 코드를 작성하고 실행해보세요.";
+      } catch (e) {
+        document.getElementById("pyodide-loading").innerHTML = `<p style="color:#fca5a5">Python 환경 로드 실패: ${e.message}</p>`;
+      }
+    })();
+
+    async function runPython(code, stdinText = "") {
+      const lines = stdinText === "" ? [] : stdinText.split("\\n");
+      // stdin 목(mock) 설정
+      const setupCode = `
+import sys, io, builtins
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+_input_lines = iter(${JSON.stringify(lines)})
+builtins.input = lambda _='': next(_input_lines, '')
+`;
+      pyodide.runPython(setupCode);
+      let output = "", error = "", success = true;
+      try {
+        await pyodide.runPythonAsync(code);
+        output = pyodide.runPython("sys.stdout.getvalue()");
+        error = pyodide.runPython("sys.stderr.getvalue()");
+      } catch (e) {
+        error = pyodide.runPython("sys.stderr.getvalue()") || e.message;
+        success = false;
+      }
+      return { output, error, success };
+    }
+
+    window.runCode = async () => {
+      if (!pyodide) return;
+      const code = editor.getValue();
+      const rawInput = document.getElementById("custom-input").value;
+      setOutput("실행 중...", "running");
+      document.getElementById("result-panel").style.display = "none";
+      const { output, error } = await runPython(code, rawInput);
+      const combined = (output || "") + (error ? "\n⚠ " + error : "");
+      setOutput(combined || "(출력 없음)", error && !output ? "error" : "ok");
+    };
+
+    window.submitCode = async () => {
+      if (!pyodide) return;
+      const code = editor.getValue();
+      setOutput("채점 중...", "running");
+      document.getElementById("result-panel").style.display = "none";
+
+      const results = [];
+      let allPassed = true;
+
+      for (let i = 0; i < prob.testCases.length; i++) {
+        const tc = prob.testCases[i];
+        const { output, error, success } = await runPython(code, tc.input || "");
+        const actual = output.replace(/\r\n/g, "\n").trimEnd();
+        const expected = tc.output.replace(/\r\n/g, "\n").trimEnd();
+        const passed = actual === expected && success;
+        if (!passed) allPassed = false;
+        results.push({ test: i + 1, passed, input: tc.input || "(없음)", expected, actual, error });
+      }
+
+      showResults(allPassed, results);
+      setOutput("", "");
+      if (allPassed) saveProgress();
+    };
+
+    function showResults(allPassed, results) {
+      const panel = document.getElementById("result-panel");
+      panel.style.display = "";
+      const passed = results.filter(r => r.passed).length;
+      document.getElementById("result-header").innerHTML = allPassed
+        ? `<span class="result-pass">🎉 모든 테스트 통과! (${passed}/${results.length})</span>`
+        : `<span class="result-fail">❌ 일부 실패 (${passed}/${results.length} 통과)</span>`;
+      document.getElementById("result-list").innerHTML = results.map(r => `
+        <div class="result-item ${r.passed ? 'pass' : 'fail'}">
+          <div class="result-item-header">${r.passed ? '✅' : '❌'} 테스트 ${r.test}</div>
+          ${!r.passed ? `
+          <div class="result-detail">
+            <div><span class="dl">입력</span><pre>${escHtml(r.input)}</pre></div>
+            <div><span class="dl">예상</span><pre>${escHtml(r.expected)}</pre></div>
+            <div><span class="dl">출력</span><pre class="got">${escHtml(r.error || r.actual || "(없음)")}</pre></div>
+          </div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    // ===== Firebase 진도 저장 =====
+    let currentUser = null;
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "index.html"; return; }
+      currentUser = user;
+      document.getElementById("nav-user").textContent = user.displayName || user.email;
+      // 이미 풀었는지 확인
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists() && snap.data().solved?.[prob.id]) {
+          document.getElementById("solved-badge").style.display = "";
+        }
+      } catch(e) {}
+    });
+
+    async function saveProgress() {
+      if (!currentUser) return;
+      document.getElementById("solved-badge").style.display = "";
+      try {
+        const ref = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(ref);
+        const now = new Date().toISOString();
+        if (snap.exists()) {
+          const solved = snap.data().solved || {};
+          if (!solved[prob.id]) {
+            solved[prob.id] = now;
+            await updateDoc(ref, { solved });
+          }
+        } else {
+          await setDoc(ref, {
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+            solved: { [prob.id]: now }
+          });
+        }
+      } catch(e) { console.error("저장 실패:", e); }
+    }
+
+    function setOutput(text, type) {
+      const el = document.getElementById("output-body");
+      el.textContent = text;
+      el.className = "output-body " + (type || "");
+    }
+    function escHtml(s) {
+      return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    }
+  </script>
+</body>
+</html>

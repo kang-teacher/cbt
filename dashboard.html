@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>문제 목록 - 파이썬 문제풀이</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a class="brand" href="index.html">🐍 파이썬 문제풀이</a>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-user"></span>
+      <button class="btn btn-ghost" id="btn-logout">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="dashboard">
+    <div class="dash-header">
+      <div>
+        <h2 class="dash-title">문제 목록</h2>
+        <p class="dash-subtitle">파이썬 기초 문제 20개를 풀어보세요</p>
+      </div>
+      <div class="progress-box">
+        <div class="progress-label">
+          <span id="solved-count">0</span> / 20 완료
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-btn active" data-cat="전체">전체</button>
+      <button class="filter-btn" data-cat="기초 출력">기초 출력</button>
+      <button class="filter-btn" data-cat="사칙연산">사칙연산</button>
+      <button class="filter-btn" data-cat="조건문">조건문</button>
+      <button class="filter-btn" data-cat="반복문">반복문</button>
+      <button class="filter-btn" data-cat="문자열">문자열</button>
+      <button class="filter-btn" data-cat="리스트">리스트</button>
+      <button class="filter-btn" data-cat="알고리즘">알고리즘</button>
+    </div>
+
+    <div class="problem-grid" id="problem-grid"></div>
+  </div>
+
+  <script src="problems.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyAgFbYZPf9f7MXIcO6RaA3Zfv9sJgP-uSE",
+      authDomain: "cbtdb-ee6b6.firebaseapp.com",
+      projectId: "cbtdb-ee6b6",
+      storageBucket: "cbtdb-ee6b6.firebasestorage.app",
+      messagingSenderId: "264536322200",
+      appId: "1:264536322200:web:a3d06f21dd0b747abce0ed"
+    });
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 로그아웃
+    document.getElementById("btn-logout").addEventListener("click", async () => {
+      await signOut(auth);
+      location.href = "index.html";
+    });
+
+    // 문제 카드 렌더링
+    function renderProblems(solved = {}) {
+      const grid = document.getElementById("problem-grid");
+      grid.innerHTML = PROBLEMS.map(p => `
+        <a href="problem.html?id=${p.id}" class="problem-card ${solved[p.id] ? 'solved' : ''}" data-cat="${p.category}">
+          <div class="card-top">
+            <span class="card-num">#${p.id}</span>
+            <span class="badge badge-${p.difficulty}">${p.difficulty}</span>
+          </div>
+          <div class="card-title">${p.title}</div>
+          <div class="card-meta">
+            <span class="card-category">${p.category}</span>
+            <span class="card-check">${solved[p.id] ? '✅' : ''}</span>
+          </div>
+        </a>
+      `).join("");
+    }
+
+    async function loadProgress(user) {
+      document.getElementById("nav-user").textContent = user.displayName || user.email;
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const solved = snap.exists() ? (snap.data().solved || {}) : {};
+        const count = Object.keys(solved).length;
+        document.getElementById("solved-count").textContent = count;
+        document.getElementById("progress-bar").style.width = (count / 20 * 100) + "%";
+        renderProblems(solved);
+      } catch(e) {
+        renderProblems({});
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { location.href = "index.html"; return; }
+      loadProgress(user);
+    });
+
+    // 카테고리 필터
+    document.getElementById("filter-bar").addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const cat = btn.dataset.cat;
+      document.querySelectorAll(".problem-card").forEach(card => {
+        card.style.display = (cat === "전체" || card.dataset.cat === cat) ? "" : "none";
+      });
+    });
+  </script>
+</body>
+</html>
