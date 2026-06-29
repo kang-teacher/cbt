@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}파이썬 문제풀이{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <!-- CodeMirror -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc }
+      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgFbYZPf9f7MXIcO6RaA3Zfv9sJgP-uSE",
+      authDomain: "cbtdb-ee6b6.firebaseapp.com",
+      projectId: "cbtdb-ee6b6",
+      storageBucket: "cbtdb-ee6b6.firebasestorage.app",
+      messagingSenderId: "264536322200",
+      appId: "1:264536322200:web:a3d06f21dd0b747abce0ed",
+      measurementId: "G-MM799FCDF2"
+    };
+
+    const fbApp = initializeApp(firebaseConfig);
+    const auth = getAuth(fbApp);
+    const db = getFirestore(fbApp);
+    const provider = new GoogleAuthProvider();
+
+    // 전역 노출
+    window._fb = { auth, db, provider, signInWithPopup, signOut, doc, getDoc, setDoc, updateDoc, onAuthStateChanged };
+
+    onAuthStateChanged(auth, (user) => {
+      window._currentUser = user || null;
+      document.dispatchEvent(new CustomEvent("authReady", { detail: user }));
+    });
+  </script>
+</head>
+<body>
+  <nav class="navbar">
+    <a class="brand" href="/dashboard">🐍 파이썬 문제풀이</a>
+    <div class="nav-right">
+      <span id="nav-user" class="nav-user"></span>
+      <button id="btn-login" class="btn btn-primary" style="display:none" onclick="window._loginWithGoogle()">Google 로그인</button>
+      <button id="btn-logout" class="btn btn-ghost" style="display:none" onclick="window._logout()">로그아웃</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+
+  <script>
+    window._loginWithGoogle = async () => {
+      const { auth, provider, signInWithPopup } = window._fb;
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        alert("로그인 실패: " + e.message);
+      }
+    };
+    window._logout = async () => {
+      const { auth, signOut } = window._fb;
+      await signOut(auth);
+      location.href = "/";
+    };
+
+    document.addEventListener("authReady", (e) => {
+      const user = e.detail;
+      const navUser = document.getElementById("nav-user");
+      const btnLogin = document.getElementById("btn-login");
+      const btnLogout = document.getElementById("btn-logout");
+      if (user) {
+        navUser.textContent = user.displayName || user.email;
+        btnLogin.style.display = "none";
+        btnLogout.style.display = "";
+      } else {
+        navUser.textContent = "";
+        btnLogin.style.display = "";
+        btnLogout.style.display = "none";
+      }
+      if (typeof window._onAuthReady === "function") window._onAuthReady(user);
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

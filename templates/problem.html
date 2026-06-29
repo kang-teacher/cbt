@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}#{{ problem.id }} {{ problem.title }} - 파이썬 문제풀이{% endblock %}
+
+{% block content %}
+<div class="problem-page">
+  <!-- 사이드바: 문제 설명 -->
+  <div class="prob-sidebar">
+    <div class="prob-nav">
+      <a href="/dashboard" class="btn btn-ghost btn-sm">← 목록</a>
+      {% if problem.id > 1 %}
+      <a href="/problem/{{ problem.id - 1 }}" class="btn btn-ghost btn-sm">이전</a>
+      {% endif %}
+      {% if problem.id < total %}
+      <a href="/problem/{{ problem.id + 1 }}" class="btn btn-ghost btn-sm">다음 →</a>
+      {% endif %}
+    </div>
+
+    <div class="prob-meta">
+      <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty }}</span>
+      <span class="prob-category">{{ problem.category }}</span>
+      <span id="solved-badge" style="display:none" class="badge-solved">✅ 해결됨</span>
+    </div>
+
+    <h1 class="prob-title">#{{ problem.id }}. {{ problem.title }}</h1>
+
+    <div class="prob-desc">{{ problem.description | replace('\n', '<br>') | safe }}</div>
+
+    {% if problem.examples %}
+    <div class="prob-section">
+      <h3>예제</h3>
+      {% for ex in problem.examples %}
+      <div class="example-block">
+        {% if ex.input %}
+        <div class="ex-row">
+          <span class="ex-label">입력</span>
+          <pre class="ex-code">{{ ex.input }}</pre>
+        </div>
+        {% endif %}
+        <div class="ex-row">
+          <span class="ex-label">출력</span>
+          <pre class="ex-code">{{ ex.output }}</pre>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if problem.hint %}
+    <details class="hint-box">
+      <summary>💡 힌트 보기</summary>
+      <p>{{ problem.hint }}</p>
+    </details>
+    {% endif %}
+  </div>
+
+  <!-- 에디터 영역 -->
+  <div class="prob-editor-wrap">
+    <div class="editor-toolbar">
+      <span class="editor-label">Python 3</span>
+      <button class="btn btn-ghost btn-sm" onclick="resetCode()">초기화</button>
+    </div>
+    <textarea id="code-editor">{{ problem.starter_code }}</textarea>
+
+    <!-- 테스트 입력 -->
+    <div class="run-bar">
+      <div class="run-input-wrap">
+        <label class="run-label">테스트 입력 (선택)</label>
+        <input type="text" id="custom-input" class="run-input" placeholder="입력값을 여기에 (예: 5)">
+      </div>
+      <button class="btn btn-secondary" onclick="runCode()">▶ 실행</button>
+      <button class="btn btn-success" onclick="submitCode()">제출</button>
+    </div>
+
+    <!-- 출력 -->
+    <div class="output-panel" id="output-panel">
+      <div class="output-header">출력</div>
+      <pre class="output-body" id="output-body">코드를 실행하면 여기에 결과가 표시됩니다.</pre>
+    </div>
+
+    <!-- 채점 결과 -->
+    <div class="result-panel" id="result-panel" style="display:none">
+      <div class="result-header" id="result-header"></div>
+      <div class="result-list" id="result-list"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const PROBLEM_ID = {{ problem.id }};
+  const STARTER = {{ problem.starter_code | tojson }};
+
+  // CodeMirror 초기화
+  const editor = CodeMirror.fromTextArea(document.getElementById("code-editor"), {
+    mode: "python",
+    theme: "dracula",
+    lineNumbers: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: false,
+    extraKeys: { Tab: (cm) => cm.replaceSelection("    ") }
+  });
+
+  // 로컬 저장/불러오기
+  const storageKey = `code_${PROBLEM_ID}`;
+  const saved = localStorage.getItem(storageKey);
+  if (saved) editor.setValue(saved);
+  editor.on("change", () => localStorage.setItem(storageKey, editor.getValue()));
+
+  function resetCode() {
+    if (confirm("코드를 초기화할까요?")) {
+      editor.setValue(STARTER);
+      localStorage.removeItem(storageKey);
+    }
+  }
+
+  async function runCode() {
+    const code = editor.getValue();
+    const inp = document.getElementById("custom-input").value;
+    setOutput("실행 중...", "running");
+    const res = await fetch("/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, input: inp })
+    });
+    const data = await res.json();
+    if (data.error && !data.output) {
+      setOutput(data.error, "error");
+    } else {
+      setOutput((data.output || "") + (data.error ? "\n--- 오류 ---\n" + data.error : ""), data.returncode === 0 ? "ok" : "error");
+    }
+    document.getElementById("result-panel").style.display = "none";
+  }
+
+  async function submitCode() {
+    const code = editor.getValue();
+    setOutput("채점 중...", "running");
+    document.getElementById("result-panel").style.display = "none";
+    const res = await fetch(`/submit/${PROBLEM_ID}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    showResults(data);
+    if (data.passed && window._currentUser) saveProgress();
+  }
+
+  function setOutput(text, type) {
+    const body = document.getElementById("output-body");
+    body.textContent = text;
+    body.className = "output-body " + (type || "");
+  }
+
+  function showResults(data) {
+    const panel = document.getElementById("result-panel");
+    const header = document.getElementById("result-header");
+    const list = document.getElementById("result-list");
+    panel.style.display = "";
+
+    if (data.error && !data.results?.length) {
+      header.innerHTML = `<span class="result-fail">❌ 오류</span>`;
+      list.innerHTML = `<div class="result-item fail"><pre>${escapeHtml(data.error)}</pre></div>`;
+      setOutput("", "");
+      return;
+    }
+
+    const passed = data.results.filter(r => r.passed).length;
+    const total = data.results.length;
+    header.innerHTML = data.passed
+      ? `<span class="result-pass">🎉 통과! (${passed}/${total})</span>`
+      : `<span class="result-fail">❌ 실패 (${passed}/${total} 통과)</span>`;
+
+    list.innerHTML = data.results.map(r => `
+      <div class="result-item ${r.passed ? 'pass' : 'fail'}">
+        <div class="result-item-header">
+          ${r.passed ? '✅' : '❌'} 테스트 ${r.test}
+        </div>
+        ${!r.passed ? `
+        <div class="result-detail">
+          <div><span class="dl">입력</span><pre>${escapeHtml(r.input)}</pre></div>
+          <div><span class="dl">예상</span><pre>${escapeHtml(r.expected)}</pre></div>
+          <div><span class="dl">출력</span><pre class="got">${escapeHtml(r.actual || r.error || "(없음)")}</pre></div>
+        </div>` : ""}
+      </div>
+    `).join("");
+
+    setOutput("", "");
+  }
+
+  async function saveProgress() {
+    const { db, doc, getDoc, setDoc, updateDoc } = window._fb;
+    const user = window._currentUser;
+    if (!user) return;
+    const ref = doc(db, "users", user.uid);
+    const snap = await getDoc(ref);
+    const now = new Date().toISOString();
+    if (snap.exists()) {
+      const solved = snap.data().solved || {};
+      if (!solved[PROBLEM_ID]) {
+        solved[PROBLEM_ID] = now;
+        await updateDoc(ref, { solved });
+      }
+    } else {
+      await setDoc(ref, {
+        email: user.email,
+        displayName: user.displayName,
+        solved: { [PROBLEM_ID]: now }
+      });
+    }
+    document.getElementById("solved-badge").style.display = "";
+  }
+
+  window._onAuthReady = async (user) => {
+    if (!user) return;
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists() && snap.data().solved?.[PROBLEM_ID]) {
+      document.getElementById("solved-badge").style.display = "";
+    }
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
+{% endblock %}
