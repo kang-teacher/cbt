@@ -2780,4 +2780,311 @@ PROBLEMS = [
         "hint": "2부터 n-1까지 반복하며 나누어지는 수가 있으면 소수가 아닙니다. `is_prime = True` 플래그를 사용하세요.",
         "starter_code": "n = int(input())\nif n < 2:\n    print('소수 아님')\nelse:\n    is_prime = True\n    for i in range(2, n):\n        if n % i == 0:\n            is_prime = False\n            break\n    if is_prime:\n        print('소수')\n    else:\n        print('소수 아님')\n",
     },
+
+    # ═══════════════════════════════════════════════
+    # 6단원: 함수와 클래스
+    # ═══════════════════════════════════════════════
+
+    # ── 01. 함수 기초 ────────────────────────────
+    {
+        "id": 190,
+        "title": "인사 함수 만들기",
+        "category": "함수",
+        "difficulty": "쉬움",
+        "description": "`'안녕 반가워'`를 출력하는 함수 `hi()`를 만들고 호출하세요.\n\n```\n# 출력 예시\n안녕 반가워\n```",
+        "examples": [
+            {"input": "", "output": "안녕 반가워"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "안녕 반가워"},
+        ],
+        "hint": "`def hi():` 로 함수를 정의하고, 마지막에 `hi()`로 호출하세요.",
+        "starter_code": "def hi():\n    # '안녕 반가워'를 출력하세요\n    pass\n\nhi()\n",
+    },
+    {
+        "id": 191,
+        "title": "이름 입력받아 로그인 메시지 출력",
+        "category": "함수",
+        "difficulty": "쉬움",
+        "description": "이름을 매개변수로 받아 `'이름님이 로그인했습니다.'`를 출력하는 함수 `greet(name)`을 만드세요.\n\n```\n# 입력 예시\n홍길동\n# 출력 예시\n홍길동님이 로그인했습니다.\n```",
+        "examples": [
+            {"input": "홍길동", "output": "홍길동님이 로그인했습니다."},
+            {"input": "김철수", "output": "김철수님이 로그인했습니다."},
+        ],
+        "test_cases": [
+            {"input": "홍길동", "output": "홍길동님이 로그인했습니다."},
+            {"input": "김철수", "output": "김철수님이 로그인했습니다."},
+            {"input": "이영희", "output": "이영희님이 로그인했습니다."},
+        ],
+        "hint": "`def greet(name):` 으로 함수를 정의하고, `print(name + '님이 로그인했습니다.')`를 사용하세요.",
+        "starter_code": "def greet(name):\n    # '이름님이 로그인했습니다.' 형식으로 출력하세요\n    pass\n\nname = input()\ngreet(name)\n",
+    },
+    {
+        "id": 192,
+        "title": "덧셈 함수 만들기 (return)",
+        "category": "함수",
+        "difficulty": "쉬움",
+        "description": "두 수를 더해 반환하는 함수 `add(a, b)`를 만들고, 두 정수를 입력받아 합을 출력하세요.\n\n```\n# 입력 예시\n3 5\n# 출력 예시\n8\n```",
+        "examples": [
+            {"input": "3 5", "output": "8"},
+            {"input": "2 10", "output": "12"},
+        ],
+        "test_cases": [
+            {"input": "3 5", "output": "8"},
+            {"input": "2 10", "output": "12"},
+            {"input": "0 7", "output": "7"},
+            {"input": "100 200", "output": "300"},
+        ],
+        "hint": "`def add(a, b): return a + b` 로 함수를 만들고, `print(add(a, b))`로 출력하세요.",
+        "starter_code": "def add(a, b):\n    # a + b를 반환하세요\n    pass\n\na, b = map(int, input().split())\nprint(add(a, b))\n",
+    },
+    {
+        "id": 193,
+        "title": "글자 수 반환 함수",
+        "category": "함수",
+        "difficulty": "쉬움",
+        "description": "문자열을 입력받아 글자 수를 반환하는 함수 `count_chars(word)`를 만들고, 결과를 출력하세요.\n\n```\n# 입력 예시\nPython\n# 출력 예시\n6\n```",
+        "examples": [
+            {"input": "Python", "output": "6"},
+            {"input": "hello", "output": "5"},
+        ],
+        "test_cases": [
+            {"input": "Python", "output": "6"},
+            {"input": "hello", "output": "5"},
+            {"input": "안녕하세요", "output": "5"},
+            {"input": "a", "output": "1"},
+        ],
+        "hint": "`def count_chars(word): return len(word)` 로 작성하세요.",
+        "starter_code": "def count_chars(word):\n    # 글자 수를 반환하세요\n    pass\n\nword = input()\nprint(count_chars(word))\n",
+    },
+    {
+        "id": 194,
+        "title": "두 수 중 큰 수 반환 함수",
+        "category": "함수",
+        "difficulty": "보통",
+        "description": "두 수를 받아 더 큰 수를 반환하는 함수 `get_max(a, b)`를 만드세요.\n\n```\n# 입력 예시\n3 7\n# 출력 예시\n7\n```",
+        "examples": [
+            {"input": "3 7", "output": "7"},
+            {"input": "10 2", "output": "10"},
+        ],
+        "test_cases": [
+            {"input": "3 7", "output": "7"},
+            {"input": "10 2", "output": "10"},
+            {"input": "5 5", "output": "5"},
+            {"input": "0 100", "output": "100"},
+        ],
+        "hint": "`if a > b: return a`와 `else: return b`를 사용하세요.",
+        "starter_code": "def get_max(a, b):\n    # a와 b 중 큰 수를 반환하세요\n    pass\n\na, b = map(int, input().split())\nprint(get_max(a, b))\n",
+    },
+    {
+        "id": 195,
+        "title": "짝수/홀수 판별 함수",
+        "category": "함수",
+        "difficulty": "보통",
+        "description": "정수를 받아 짝수면 `'짝수'`, 홀수면 `'홀수'`를 반환하는 함수 `check_even(n)`을 만드세요.\n\n```\n# 입력 예시\n4\n# 출력 예시\n짝수\n```",
+        "examples": [
+            {"input": "4", "output": "짝수"},
+            {"input": "7", "output": "홀수"},
+        ],
+        "test_cases": [
+            {"input": "4", "output": "짝수"},
+            {"input": "7", "output": "홀수"},
+            {"input": "0", "output": "짝수"},
+            {"input": "13", "output": "홀수"},
+            {"input": "100", "output": "짝수"},
+        ],
+        "hint": "`if n % 2 == 0: return '짝수'` 를 사용하세요.",
+        "starter_code": "def check_even(n):\n    # 짝수면 '짝수', 홀수면 '홀수'를 반환하세요\n    pass\n\nn = int(input())\nprint(check_even(n))\n",
+    },
+    {
+        "id": 196,
+        "title": "지역 변수와 파라미터 이해하기",
+        "category": "함수",
+        "difficulty": "보통",
+        "description": "아래 순서대로 코드를 작성하여 전역변수와 함수 파라미터(지역변수)의 차이를 확인하세요.\n\n1. 전역변수 `a = 10`\n2. 함수 `what(a)`: `'1: '`와 a를 출력 → `a = a - 2` → a 반환\n3. `b = what(5)` 호출\n4. `a = b - 2` 실행\n5. `'2: '`와 b, `'3: '`와 a 출력\n\n```\n# 출력 예시\n1: 5\n2: 3\n3: 1\n```",
+        "examples": [
+            {"input": "", "output": "1: 5\n2: 3\n3: 1"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "1: 5\n2: 3\n3: 1"},
+        ],
+        "hint": "함수 안의 `a`는 파라미터(지역변수)이므로 전역변수 `a = 10`과는 별개입니다.",
+        "starter_code": "a = 10\n\ndef what(a):\n    print('1:', a)\n    a = a - 2\n    return a\n\nb = what(5)\na = b - 2\nprint('2:', b)\nprint('3:', a)\n",
+    },
+    {
+        "id": 197,
+        "title": "global 키워드 활용",
+        "category": "함수",
+        "difficulty": "보통",
+        "description": "아래 순서대로 코드를 작성하여 `global` 키워드의 동작을 확인하세요.\n\n1. 전역변수 `a = 3`\n2. 함수 `test()`: `global a` 선언 → `a = 5` → a 출력\n3. `test()` 호출\n4. `a = a + 3` 실행\n5. a 출력\n\n```\n# 출력 예시\n5\n8\n```",
+        "examples": [
+            {"input": "", "output": "5\n8"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "5\n8"},
+        ],
+        "hint": "`global a`를 함수 안에 선언하면 함수 내부에서 전역변수를 직접 수정할 수 있습니다.",
+        "starter_code": "a = 3\n\ndef test():\n    global a\n    a = 5\n    print(a)\n\ntest()\na = a + 3\nprint(a)\n",
+    },
+    {
+        "id": 198,
+        "title": "함수를 활용한 계산기",
+        "category": "함수",
+        "difficulty": "도전",
+        "description": "`add(a, b)`와 `minus(a, b)` 함수를 만들어 계산기를 구현하세요.\n\n- 입력 `1` → 다음 줄에 더할 값 입력 → num에 더하기\n- 입력 `2` → 다음 줄에 뺄 값 입력 → num에서 빼기\n- 입력 `3` → 반복 종료 후 `'최종 결과는 num'` 출력\n\n```\n# 입력 예시\n1\n10\n2\n3\n3\n# 출력 예시\n최종 결과는 7\n```\n\n**※ input()에 안내 문구를 넣지 마세요.**",
+        "examples": [
+            {"input": "1\n10\n2\n3\n3", "output": "최종 결과는 7"},
+        ],
+        "test_cases": [
+            {"input": "1\n10\n2\n3\n3", "output": "최종 결과는 7"},
+            {"input": "3", "output": "최종 결과는 0"},
+            {"input": "1\n5\n1\n5\n3", "output": "최종 결과는 10"},
+            {"input": "1\n100\n2\n50\n2\n20\n3", "output": "최종 결과는 30"},
+        ],
+        "hint": "`num = 0`으로 시작하고 `while True:` 안에서 c를 입력받아 처리하세요.",
+        "starter_code": "def add(a, b):\n    return a + b\n\ndef minus(a, b):\n    return a - b\n\nnum = 0\n\nwhile True:\n    c = input()\n    if c == '1':\n        how = int(input())\n        num = add(num, how)\n    elif c == '2':\n        how = int(input())\n        num = minus(num, how)\n    elif c == '3':\n        break\n\nprint('최종 결과는', num)\n",
+    },
+
+    # ── 02. 클래스 기초 ──────────────────────────
+    {
+        "id": 199,
+        "title": "클래스 기본 구조 이해하기",
+        "category": "클래스",
+        "difficulty": "보통",
+        "description": "클래스 `A`를 만들고, 인스턴스 메서드 `plus()`가 `self.num`에 5를 더해 출력하도록 구현하세요.\n\n```python\naa = A(10)\naa.plus()   # 15\nbb = A(5)\nbb.plus()   # 10\naa.plus()   # 20\n```\n\n```\n# 출력 예시\n15\n10\n20\n```",
+        "examples": [
+            {"input": "", "output": "15\n10\n20"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "15\n10\n20"},
+        ],
+        "hint": "`self.num = self.num + 5` 처럼 인스턴스 변수를 수정하면, 호출할 때마다 값이 누적됩니다.",
+        "starter_code": "class A:\n    def __init__(self, num):\n        self.num = num\n\n    def plus(self):\n        # self.num에 5를 더하고 출력하세요\n        pass\n\naa = A(10)\naa.plus()\nbb = A(5)\nbb.plus()\naa.plus()\n",
+    },
+    {
+        "id": 200,
+        "title": "Person 클래스 만들기",
+        "category": "클래스",
+        "difficulty": "보통",
+        "description": "`Person` 클래스를 만들어 이름과 나이를 저장하고, `introduce()` 메서드로 자기소개를 출력하세요.\n\n이름과 나이를 공백으로 구분해 한 줄에 입력받습니다.\n\n```\n# 입력 예시\n홍길동 26\n# 출력 예시\n안녕하세요, 저는 홍길동이고, 나이는 26살입니다.\n```",
+        "examples": [
+            {"input": "홍길동 26", "output": "안녕하세요, 저는 홍길동이고, 나이는 26살입니다."},
+            {"input": "김철수 17", "output": "안녕하세요, 저는 김철수이고, 나이는 17살입니다."},
+        ],
+        "test_cases": [
+            {"input": "홍길동 26", "output": "안녕하세요, 저는 홍길동이고, 나이는 26살입니다."},
+            {"input": "김철수 17", "output": "안녕하세요, 저는 김철수이고, 나이는 17살입니다."},
+            {"input": "이영희 30", "output": "안녕하세요, 저는 이영희이고, 나이는 30살입니다."},
+        ],
+        "hint": "`introduce()`에서 f-string을 사용하세요: `f'안녕하세요, 저는 {self.name}이고, 나이는 {self.age}살입니다.'`",
+        "starter_code": "class Person:\n    def __init__(self, name, age):\n        self.name = name\n        self.age = age\n\n    def introduce(self):\n        # '안녕하세요, 저는 이름이고, 나이는 나이살입니다.' 형식으로 출력하세요\n        pass\n\ndata = input().split()\nname = data[0]\nage = int(data[1])\nperson = Person(name, age)\nperson.introduce()\n",
+    },
+    {
+        "id": 201,
+        "title": "Rectangle 클래스로 사각형 넓이 구하기",
+        "category": "클래스",
+        "difficulty": "보통",
+        "description": "`Rectangle` 클래스를 만들어 가로(width)와 세로(height)를 저장하고, `area()` 메서드로 넓이를 반환하세요.\n\n```\n# 입력 예시\n5 10\n# 출력 예시\n사각형의 넓이: 50\n```",
+        "examples": [
+            {"input": "5 10", "output": "사각형의 넓이: 50"},
+            {"input": "3 4", "output": "사각형의 넓이: 12"},
+        ],
+        "test_cases": [
+            {"input": "5 10", "output": "사각형의 넓이: 50"},
+            {"input": "3 4", "output": "사각형의 넓이: 12"},
+            {"input": "7 7", "output": "사각형의 넓이: 49"},
+            {"input": "1 100", "output": "사각형의 넓이: 100"},
+        ],
+        "hint": "`area(self)` 메서드에서 `return self.width * self.height`를 사용하세요.",
+        "starter_code": "class Rectangle:\n    def __init__(self, width, height):\n        self.width = width\n        self.height = height\n\n    def area(self):\n        # 넓이(width * height)를 반환하세요\n        pass\n\nw, h = map(int, input().split())\nrect = Rectangle(w, h)\nprint('사각형의 넓이:', rect.area())\n",
+    },
+    {
+        "id": 202,
+        "title": "Calculator 클래스로 사칙연산",
+        "category": "클래스",
+        "difficulty": "보통",
+        "description": "`Calculator` 클래스를 만들어 두 수를 저장하고, 덧셈·뺄셈·곱셈·나눗셈 메서드를 구현하세요.\n\n```\n# 입력 예시\n10 5\n# 출력 예시\n덧셈 결과: 15\n뺄셈 결과: 5\n곱셈 결과: 50\n나눗셈 결과: 2.0\n```",
+        "examples": [
+            {"input": "10 5", "output": "덧셈 결과: 15\n뺄셈 결과: 5\n곱셈 결과: 50\n나눗셈 결과: 2.0"},
+            {"input": "8 4", "output": "덧셈 결과: 12\n뺄셈 결과: 4\n곱셈 결과: 32\n나눗셈 결과: 2.0"},
+        ],
+        "test_cases": [
+            {"input": "10 5", "output": "덧셈 결과: 15\n뺄셈 결과: 5\n곱셈 결과: 50\n나눗셈 결과: 2.0"},
+            {"input": "8 4", "output": "덧셈 결과: 12\n뺄셈 결과: 4\n곱셈 결과: 32\n나눗셈 결과: 2.0"},
+            {"input": "9 3", "output": "덧셈 결과: 12\n뺄셈 결과: 6\n곱셈 결과: 27\n나눗셈 결과: 3.0"},
+        ],
+        "hint": "나눗셈 메서드는 `return self.a / self.b`를 사용하면 자동으로 float 결과가 나옵니다.",
+        "starter_code": "class Calculator:\n    def __init__(self, a, b):\n        self.a = a\n        self.b = b\n\n    def add(self):\n        return self.a + self.b\n\n    def subtract(self):\n        return self.a - self.b\n\n    def multiply(self):\n        return self.a * self.b\n\n    def divide(self):\n        # self.a / self.b를 반환하세요\n        pass\n\na, b = map(int, input().split())\ncalc = Calculator(a, b)\nprint('덧셈 결과:', calc.add())\nprint('뺄셈 결과:', calc.subtract())\nprint('곱셈 결과:', calc.multiply())\nprint('나눗셈 결과:', calc.divide())\n",
+    },
+
+    # ── 응용 / 도전 ──────────────────────────────
+    {
+        "id": 203,
+        "title": "팩토리얼 계산 함수",
+        "category": "응용",
+        "difficulty": "보통",
+        "description": "n의 팩토리얼(n!)을 반환하는 함수 `factorial(n)`을 만드세요.\n\n- `0! = 1`, `1! = 1`, `n! = 1 × 2 × ... × n`\n\n```\n# 입력 예시\n5\n# 출력 예시\n120\n```",
+        "examples": [
+            {"input": "5", "output": "120"},
+            {"input": "0", "output": "1"},
+        ],
+        "test_cases": [
+            {"input": "5", "output": "120"},
+            {"input": "0", "output": "1"},
+            {"input": "1", "output": "1"},
+            {"input": "6", "output": "720"},
+            {"input": "10", "output": "3628800"},
+        ],
+        "hint": "`result = 1`로 시작해 `for i in range(1, n+1): result *= i`를 수행하세요.",
+        "starter_code": "def factorial(n):\n    result = 1\n    for i in range(1, n + 1):\n        # result에 i를 곱하세요\n        pass\n    return result\n\nn = int(input())\nprint(factorial(n))\n",
+    },
+    {
+        "id": 204,
+        "title": "리스트 최댓값 반환 함수",
+        "category": "응용",
+        "difficulty": "보통",
+        "description": "리스트를 순회하며 최댓값을 찾아 반환하는 함수 `get_max_val(lst)`를 만드세요.\n(`max()` 내장 함수는 사용하지 마세요.)\n\n리스트 `lis = [3, 7, 1, 9, 2, 5]`의 최댓값을 출력하세요.\n\n```\n# 출력 예시\n9\n```",
+        "examples": [
+            {"input": "", "output": "9"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "9"},
+        ],
+        "hint": "`current_max = lst[0]`으로 시작해 `for x in lst:`에서 `if x > current_max: current_max = x`를 수행하세요.",
+        "starter_code": "def get_max_val(lst):\n    current_max = lst[0]\n    for x in lst:\n        # current_max보다 x가 크면 current_max를 x로 교체하세요\n        pass\n    return current_max\n\nlis = [3, 7, 1, 9, 2, 5]\nprint(get_max_val(lis))\n",
+    },
+    {
+        "id": 205,
+        "title": "Circle 클래스로 원의 넓이 구하기",
+        "category": "도전",
+        "difficulty": "도전",
+        "description": "`Circle` 클래스를 만들어 반지름을 저장하고, `area()` 메서드로 원의 넓이를 반환하세요.\n\n원의 넓이 = 반지름 × 반지름 × 3.14\n\n```\n# 입력 예시\n5\n# 출력 예시\n78.5\n```",
+        "examples": [
+            {"input": "5", "output": "78.5"},
+            {"input": "10", "output": "314.0"},
+        ],
+        "test_cases": [
+            {"input": "5", "output": "78.5"},
+            {"input": "10", "output": "314.0"},
+            {"input": "1", "output": "3.14"},
+            {"input": "3", "output": "28.26"},
+        ],
+        "hint": "`area(self)` 에서 `return self.radius * self.radius * 3.14`를 사용하세요.",
+        "starter_code": "class Circle:\n    def __init__(self, radius):\n        self.radius = radius\n\n    def area(self):\n        # 반지름 * 반지름 * 3.14를 반환하세요\n        pass\n\nr = int(input())\ncircle = Circle(r)\nprint(circle.area())\n",
+    },
+    {
+        "id": 206,
+        "title": "BankAccount 클래스 (입출금)",
+        "category": "도전",
+        "difficulty": "도전",
+        "description": "`BankAccount` 클래스를 만들어 잔액을 관리하세요.\n\n- `__init__(self, balance)`: 초기 잔액 설정\n- `deposit(self, amount)`: 입금 (잔액 증가)\n- `withdraw(self, amount)`: 출금 (잔액 감소)\n- `get_balance(self)`: 현재 잔액 반환\n\n초기 잔액 1000에서 500 입금 후 200 출금 시 최종 잔액을 출력하세요.\n\n```\n# 출력 예시\n1300\n```",
+        "examples": [
+            {"input": "", "output": "1300"},
+        ],
+        "test_cases": [
+            {"input": "", "output": "1300"},
+        ],
+        "hint": "deposit은 `self.balance += amount`, withdraw는 `self.balance -= amount`를 사용하세요.",
+        "starter_code": "class BankAccount:\n    def __init__(self, balance):\n        self.balance = balance\n\n    def deposit(self, amount):\n        # 잔액에 amount를 더하세요\n        pass\n\n    def withdraw(self, amount):\n        # 잔액에서 amount를 빼세요\n        pass\n\n    def get_balance(self):\n        return self.balance\n\naccount = BankAccount(1000)\naccount.deposit(500)\naccount.withdraw(200)\nprint(account.get_balance())\n",
+    },
 ]
