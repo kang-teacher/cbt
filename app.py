@@ -8,6 +8,21 @@ from flask_cors import CORS
 
 from problems import PROBLEMS
 
+UNITS = [
+    {"number": 1, "title": "1단원", "subtitle": "기초 출력과 자료형", "start": 1,   "end": 58},
+    {"number": 2, "title": "2단원", "subtitle": "입력과 연산자",       "start": 59,  "end": 87},
+    {"number": 3, "title": "3단원", "subtitle": "리스트와 문자열",     "start": 88,  "end": 123},
+    {"number": 4, "title": "4단원", "subtitle": "조건문",             "start": 124, "end": 153},
+    {"number": 5, "title": "5단원", "subtitle": "반복문",             "start": 154, "end": 189},
+    {"number": 6, "title": "6단원", "subtitle": "함수와 클래스",       "start": 190, "end": 9999},
+]
+
+def get_unit(pid):
+    for u in UNITS:
+        if u["start"] <= pid <= u["end"]:
+            return u["number"]
+    return 0
+
 app = Flask(__name__)
 CORS(app)
 
@@ -78,7 +93,8 @@ def index():
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html", problems=PROBLEMS)
+    problems_with_unit = [dict(p, unit=get_unit(p["id"])) for p in PROBLEMS]
+    return render_template("dashboard.html", problems=problems_with_unit, units=UNITS)
 
 
 @app.route("/problem/<int:problem_id>")

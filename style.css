@@ -141,6 +141,62 @@ pre { font-family: 'Consolas', 'D2Coding', monospace; }
 .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
 .card-category { font-size: 12px; color: var(--text2); }
 
+/* ===== Unit Tabs ===== */
+.unit-tab-bar {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.unit-tab {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); padding: 7px 18px; border-radius: 20px;
+  cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.15s;
+}
+.unit-tab:hover, .unit-tab.active {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+
+/* ===== Unit Section ===== */
+.unit-section { margin-bottom: 32px; }
+.unit-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  cursor: pointer; margin-bottom: 14px;
+  transition: border-color 0.15s;
+}
+.unit-section-header:hover { border-color: var(--accent); }
+.unit-section-left { display: flex; align-items: center; gap: 14px; }
+.unit-badge {
+  background: var(--accent); color: #fff;
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.unit-section-title { font-size: 16px; font-weight: 700; display: block; }
+.unit-section-count { font-size: 12px; color: var(--text2); }
+.unit-section-right { display: flex; align-items: center; gap: 12px; }
+.unit-solved-text { font-size: 13px; color: var(--text2); white-space: nowrap; }
+.unit-mini-bar-wrap { width: 80px; height: 6px; background: var(--bg3); border-radius: 6px; overflow: hidden; }
+.unit-mini-bar-fill { height: 100%; background: var(--green); border-radius: 6px; transition: width 0.4s ease; }
+.unit-chevron { color: var(--text2); font-size: 12px; }
+
+.unit-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px;
+  overflow: hidden; transition: max-height 0.3s ease;
+}
+.unit-grid.collapsed { display: none; }
+
+/* ===== Login Banner ===== */
+.login-banner {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 24px;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 50;
+  font-size: 14px; color: var(--text2);
+}
+
+/* ===== badge-도전 ===== */
+.badge-도전 { background: #3b1f6b; color: #c4b5fd; }
+
 /* ===== Problem Page ===== */
 .problem-page { display: flex; height: calc(100vh - 56px); overflow: hidden; }
 

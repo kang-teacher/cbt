@@ -3,11 +3,12 @@
 
 {% block content %}
 <div class="dashboard">
+
   <!-- 헤더 -->
   <div class="dash-header">
     <div>
-      <h2 class="dash-title">문제 목록</h2>
-      <p class="dash-subtitle">파이썬 기초 문제 {{ problems|length }}개를 풀어보세요</p>
+      <h2 class="dash-title">파이썬 문제풀이</h2>
+      <p class="dash-subtitle">총 {{ problems|length }}문제 · 단원별로 공부해보세요</p>
     </div>
     <div class="progress-box">
       <div class="progress-label">
@@ -19,7 +20,15 @@
     </div>
   </div>
 
-  <!-- 카테고리 필터 -->
+  <!-- 단원 탭 -->
+  <div class="unit-tab-bar" id="unit-tab-bar">
+    <button class="unit-tab active" data-unit="0">전체</button>
+    {% for u in units %}
+    <button class="unit-tab" data-unit="{{ u.number }}">{{ u.title }}</button>
+    {% endfor %}
+  </div>
+
+  <!-- 카테고리 필터 (전체 선택 시만 표시) -->
   <div class="filter-bar" id="filter-bar">
     <button class="filter-btn active" data-cat="전체">전체</button>
     {% set cats = [] %}
@@ -31,22 +40,44 @@
     {% endfor %}
   </div>
 
-  <!-- 문제 그리드 -->
-  <div class="problem-grid" id="problem-grid">
-    {% for p in problems %}
-    <a href="/problem/{{ p.id }}" class="problem-card" data-cat="{{ p.category }}" data-id="{{ p.id }}">
-      <div class="card-top">
-        <span class="card-num">#{{ p.id }}</span>
-        <span class="badge badge-{{ p.difficulty }}">{{ p.difficulty }}</span>
+  <!-- 단원별 섹션 -->
+  {% for u in units %}
+  {% set unit_problems = problems | selectattr("unit", "equalto", u.number) | list %}
+  <div class="unit-section" data-unit="{{ u.number }}" id="unit-section-{{ u.number }}">
+    <div class="unit-section-header" onclick="toggleUnit({{ u.number }})">
+      <div class="unit-section-left">
+        <span class="unit-badge">{{ u.title }}</span>
+        <div>
+          <span class="unit-section-title">{{ u.subtitle }}</span>
+          <span class="unit-section-count">{{ unit_problems|length }}문제</span>
+        </div>
       </div>
-      <div class="card-title">{{ p.title }}</div>
-      <div class="card-meta">
-        <span class="card-category">{{ p.category }}</span>
-        <span class="card-check" id="check-{{ p.id }}"></span>
+      <div class="unit-section-right">
+        <span class="unit-solved-text" id="unit-solved-{{ u.number }}">0 / {{ unit_problems|length }}</span>
+        <div class="unit-mini-bar-wrap">
+          <div class="unit-mini-bar-fill" id="unit-bar-{{ u.number }}" style="width:0%"></div>
+        </div>
+        <span class="unit-chevron" id="chevron-{{ u.number }}">▼</span>
       </div>
-    </a>
-    {% endfor %}
+    </div>
+    <div class="unit-grid" id="unit-grid-{{ u.number }}">
+      {% for p in unit_problems %}
+      <a href="/problem/{{ p.id }}" class="problem-card" data-cat="{{ p.category }}" data-id="{{ p.id }}" data-unit="{{ p.unit }}">
+        <div class="card-top">
+          <span class="card-num">#{{ p.id }}</span>
+          <span class="badge badge-{{ p.difficulty }}">{{ p.difficulty }}</span>
+        </div>
+        <div class="card-title">{{ p.title }}</div>
+        <div class="card-meta">
+          <span class="card-category">{{ p.category }}</span>
+          <span class="card-check" id="check-{{ p.id }}"></span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
   </div>
+  {% endfor %}
+
 </div>
 
 <!-- 로그인 유도 배너 -->
@@ -59,7 +90,9 @@
 {% block scripts %}
 <script>
   const TOTAL = {{ problems|length }};
+  const UNITS = {{ units | tojson }};
 
+  /* ── 진행률 로드 ── */
   async function loadProgress(user) {
     if (!user) {
       document.getElementById("login-banner").style.display = "flex";
@@ -70,30 +103,90 @@
     const snap = await getDoc(ref);
     const solved = snap.exists() ? (snap.data().solved || {}) : {};
     const count = Object.keys(solved).length;
+
     document.getElementById("solved-count").textContent = count;
     document.getElementById("progress-bar").style.width = (count / TOTAL * 100) + "%";
-    for (const id of Object.keys(solved)) {
-      const el = document.getElementById("check-" + id);
-      const card = document.querySelector(`[data-id="${id}"]`);
-      if (el) el.textContent = "✅";
-      if (card) card.classList.add("solved");
-    }
+
+    // 단원별 진행률
+    const unitCounts = {};
+    UNITS.forEach(u => unitCounts[u.number] = { total: 0, done: 0 });
+    document.querySelectorAll(".problem-card").forEach(card => {
+      const id = card.dataset.id;
+      const unit = parseInt(card.dataset.unit);
+      if (unitCounts[unit]) unitCounts[unit].total++;
+      if (solved[id]) {
+        unitCounts[unit].done++;
+        const el = document.getElementById("check-" + id);
+        if (el) el.textContent = "✅";
+        card.classList.add("solved");
+      }
+    });
+    UNITS.forEach(u => {
+      const { total, done } = unitCounts[u.number] || { total: 0, done: 0 };
+      const txt = document.getElementById("unit-solved-" + u.number);
+      const bar = document.getElementById("unit-bar-" + u.number);
+      if (txt) txt.textContent = done + " / " + total;
+      if (bar) bar.style.width = (total ? done / total * 100 : 0) + "%";
+    });
   }
 
-  window._onAuthReady = (user) => {
-    loadProgress(user);
-  };
+  window._onAuthReady = (user) => loadProgress(user);
 
-  // 필터
+  /* ── 단원 탭 ── */
+  let activeUnit = 0;
+  let activeCat = "전체";
+
+  document.getElementById("unit-tab-bar").addEventListener("click", (e) => {
+    const tab = e.target.closest(".unit-tab");
+    if (!tab) return;
+    document.querySelectorAll(".unit-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeUnit = parseInt(tab.dataset.unit);
+    activeCat = "전체";
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    document.querySelector(".filter-btn[data-cat='전체']").classList.add("active");
+    applyFilter();
+  });
+
+  /* ── 카테고리 필터 ── */
   document.getElementById("filter-bar").addEventListener("click", (e) => {
     const btn = e.target.closest(".filter-btn");
     if (!btn) return;
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    const cat = btn.dataset.cat;
-    document.querySelectorAll(".problem-card").forEach(card => {
-      card.style.display = (cat === "전체" || card.dataset.cat === cat) ? "" : "none";
-    });
+    activeCat = btn.dataset.cat;
+    applyFilter();
   });
+
+  function applyFilter() {
+    const filterBar = document.getElementById("filter-bar");
+    filterBar.style.display = activeUnit === 0 ? "flex" : "none";
+
+    document.querySelectorAll(".unit-section").forEach(sec => {
+      const unit = parseInt(sec.dataset.unit);
+      if (activeUnit !== 0 && unit !== activeUnit) {
+        sec.style.display = "none";
+        return;
+      }
+      sec.style.display = "";
+      sec.querySelectorAll(".problem-card").forEach(card => {
+        const catMatch = (activeCat === "전체" || card.dataset.cat === activeCat);
+        card.style.display = catMatch ? "" : "none";
+      });
+    });
+  }
+
+  /* ── 단원 접기/펴기 ── */
+  function toggleUnit(unit) {
+    const grid = document.getElementById("unit-grid-" + unit);
+    const chevron = document.getElementById("chevron-" + unit);
+    if (grid.classList.contains("collapsed")) {
+      grid.classList.remove("collapsed");
+      chevron.textContent = "▼";
+    } else {
+      grid.classList.add("collapsed");
+      chevron.textContent = "▶";
+    }
+  }
 </script>
 {% endblock %}
